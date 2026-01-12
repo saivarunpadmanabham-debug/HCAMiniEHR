@@ -11,11 +11,13 @@ public class Patient
 
     [Required(ErrorMessage = "First name is required")]
     [MaxLength(100, ErrorMessage = "First name cannot exceed 100 characters")]
+    [RegularExpression(@"^[a-zA-Z]+([ '-][a-zA-Z]+)*$", ErrorMessage = "First name can only contain letters, spaces, hyphens, and apostrophes")]
     [Display(Name = "First Name")]
     public string FirstName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Last name is required")]
     [MaxLength(100, ErrorMessage = "Last name cannot exceed 100 characters")]
+    [RegularExpression(@"^[a-zA-Z]+([ '-][a-zA-Z]+)*$", ErrorMessage = "Last name can only contain letters, spaces, hyphens, and apostrophes")]
     [Display(Name = "Last Name")]
     public string LastName { get; set; } = string.Empty;
 

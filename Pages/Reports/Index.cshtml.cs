@@ -31,8 +31,8 @@ public class IndexModel : PageModel
                 .ThenInclude(a => a.Patient)
             .Include(lo => lo.Appointment)
                 .ThenInclude(a => a.Doctor)
-            .Where(lo => lo.Status == "Pending")
             .OrderBy(lo => lo.OrderDate)
+            //.Where(lo => lo.Status)
             .Select(lo => new PendingLabOrderReportDTO
             {
                 LabOrderId = lo.LabOrderId,
