@@ -9,21 +9,28 @@ public class LabOrder
     [Key]
     public int LabOrderId { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Appointment is required")]
+    [Display(Name = "Appointment")]
     public int AppointmentId { get; set; }
 
-    [Required]
-    [MaxLength(200)]
+    [Required(ErrorMessage = "Test name is required")]
+    [MaxLength(200, ErrorMessage = "Test name cannot exceed 200 characters")]
+    [Display(Name = "Test Name")]
     public string TestName { get; set; } = string.Empty;
 
+    [Display(Name = "Order Date")]
+    [DataType(DataType.Date)]
     public DateTime OrderDate { get; set; } = DateTime.Now;
 
-    [MaxLength(20)]
+    [Required]
+    [MaxLength(20, ErrorMessage = "Status cannot exceed 20 characters")]
     public string Status { get; set; } = "Pending";
 
-    [MaxLength(1000)]
+    [MaxLength(1000, ErrorMessage = "Results cannot exceed 1000 characters")]
     public string? Results { get; set; }
 
+    [Display(Name = "Completed Date")]
+    [DataType(DataType.Date)]
     public DateTime? CompletedDate { get; set; }
 
     // Navigation property

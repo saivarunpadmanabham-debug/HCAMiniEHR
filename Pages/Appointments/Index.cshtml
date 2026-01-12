@@ -57,7 +57,7 @@
                                     </td>
                                     <td>@appointment.AppointmentDate.ToString("MM/dd/yyyy")</td>
                                     <td>@appointment.AppointmentTime.ToString(@"hh\:mm")</td>
-                                    <td>@appointment.DoctorName</td>
+                                    <td>@appointment.Doctor.FullName</td>
                                     <td>@appointment.Reason</td>
                                     <td>
                                         @if (appointment.Status == "Scheduled")

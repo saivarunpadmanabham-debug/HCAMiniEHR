@@ -1,71 +1,122 @@
-@page
-@model HCAMiniEHR.Pages.Appointments.CreateModel
-@{
-    ViewData["Title"] = "Schedule Appointment";
-}
+using HCAMiniEHR.Models;
+using HCAMiniEHR.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">
-                        <i class="bi bi-calendar-plus-fill me-2"></i>Schedule New Appointment
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+namespace HCAMiniEHR.Pages.Appointments;
 
-                        <div class="mb-3">
-                            <label asp-for="PatientId" class="form-label">Patient</label>
-                            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
-                                <option value="">-- Select Patient --</option>
-                            </select>
-                            <span asp-validation-for="PatientId" class="text-danger"></span>
-                        </div>
+public class CreateModel : PageModel
+{
+    private readonly AppointmentService _appointmentService;
+    private readonly PatientService _patientService;
+    private readonly DoctorService _doctorService;
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="AppointmentDate" class="form-label">Appointment Date</label>
-                                <input asp-for="AppointmentDate" class="form-control" type="date" />
-                                <span asp-validation-for="AppointmentDate" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="AppointmentTime" class="form-label">Appointment Time</label>
-                                <input asp-for="AppointmentTime" class="form-control" type="time" />
-                                <span asp-validation-for="AppointmentTime" class="text-danger"></span>
-                            </div>
-                        </div>
+    public CreateModel(AppointmentService appointmentService, PatientService patientService, DoctorService doctorService)
+    {
+        _appointmentService = appointmentService;
+        _patientService = patientService;
+        _doctorService = doctorService;
+    }
 
-                        <div class="mb-3">
-                            <label asp-for="DoctorName" class="form-label">Doctor Name</label>
-                            <input asp-for="DoctorName" class="form-control" placeholder="Dr. Smith" />
-                            <span asp-validation-for="DoctorName" class="text-danger"></span>
-                        </div>
+    [BindProperty]
+    public int PatientId { get; set; }
 
-                        <div class="mb-3">
-                            <label asp-for="Reason" class="form-label">Reason for Visit</label>
-                            <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Enter reason for appointment"></textarea>
-                            <span asp-validation-for="Reason" class="text-danger"></span>
-                        </div>
+    [BindProperty]
+    public int DoctorId { get; set; }
 
+    [BindProperty]
+    public DateTime AppointmentDate { get; set; } = DateTime.Now.AddDays(1);
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <a asp-page="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left me-1"></i>Back to List
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save me-1"></i>Schedule Appointment
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+    [BindProperty]
+    public TimeSpan AppointmentTime { get; set; } = new TimeSpan(9, 0, 0);
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    [BindProperty]
+    public string? Reason { get; set; }
+
+    [BindProperty]
+    public bool UseStoredProcedure { get; set; } = false;
+
+    public SelectList Patients { get; set; } = null!;
+    public SelectList Doctors { get; set; } = null!;
+
+    public async Task OnGetAsync(int? patientId)
+    {
+        try
+        {
+            var patients = await _patientService.GetAllPatientsAsync();
+            Patients = new SelectList(patients, "PatientId", "FullName");
+
+            var doctors = await _doctorService.GetAllDoctorsAsync();
+            Doctors = new SelectList(doctors, "DoctorId", "FullNameWithSpecialization");
+
+            if (patientId.HasValue)
+            {
+                PatientId = patientId.Value;
+            }
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"Error loading data: {ex.Message}");
+        }
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadSelectLists();
+            return Page();
+        }
+
+        try
+        {
+            if (UseStoredProcedure)
+            {
+                // Use stored procedure to create appointment
+                var newId = await _appointmentService.CreateAppointmentUsingStoredProcAsync(
+                    PatientId, DoctorId, AppointmentDate, AppointmentTime, Reason);
+                
+                TempData["SuccessMessage"] = $"Appointment created successfully using stored procedure! (ID: {newId})";
+            }
+            else
+            {
+                // Use regular EF Core method
+                var appointment = new Appointment
+                {
+                    PatientId = PatientId,
+                    DoctorId = DoctorId,
+                    AppointmentDate = AppointmentDate,
+                    AppointmentTime = AppointmentTime,
+                    Reason = Reason
+                };
+                await _appointmentService.CreateAppointmentAsync(appointment);
+                TempData["SuccessMessage"] = "Appointment created successfully!";
+            }
+
+            return RedirectToPage("./Index");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            await LoadSelectLists();
+            return Page();
+        }
+    }
+
+    private async Task LoadSelectLists()
+    {
+        try
+        {
+            var patients = await _patientService.GetAllPatientsAsync();
+            Patients = new SelectList(patients, "PatientId", "FullName");
+
+            var doctors = await _doctorService.GetAllDoctorsAsync();
+            Doctors = new SelectList(doctors, "DoctorId", "FullNameWithSpecialization");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"Error loading data: {ex.Message}");
+        }
+    }
 }
