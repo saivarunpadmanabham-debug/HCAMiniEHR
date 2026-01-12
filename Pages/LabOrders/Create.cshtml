@@ -1,0 +1,61 @@
+@page
+@model HCAMiniEHR.Pages.LabOrders.CreateModel
+@{
+    ViewData["Title"] = "Create Lab Order";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-clipboard-plus-fill me-2"></i>Create Lab Order
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="LabOrder.AppointmentId" class="form-label">Appointment</label>
+                            <select asp-for="LabOrder.AppointmentId" asp-items="Model.Appointments" class="form-select">
+                                <option value="">-- Select Appointment --</option>
+                            </select>
+                            <span asp-validation-for="LabOrder.AppointmentId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="LabOrder.TestName" class="form-label">Test Name</label>
+                            <input asp-for="LabOrder.TestName" class="form-control" 
+                                   placeholder="e.g., Complete Blood Count (CBC)" />
+                            <span asp-validation-for="LabOrder.TestName" class="text-danger"></span>
+                            <div class="form-text">
+                                <small>Common tests: CBC, Lipid Panel, HbA1c, Thyroid Function, X-Ray, MRI</small>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <small>The lab order will be created with "Pending" status by default. 
+                            You can update the status and add results later.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-page="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Back to List
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save me-1"></i>Create Lab Order
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

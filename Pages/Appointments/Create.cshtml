@@ -1,0 +1,83 @@
+@page
+@model HCAMiniEHR.Pages.Appointments.CreateModel
+@{
+    ViewData["Title"] = "Schedule Appointment";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-calendar-plus-fill me-2"></i>Schedule New Appointment
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="PatientId" class="form-label">Patient</label>
+                            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
+                                <option value="">-- Select Patient --</option>
+                            </select>
+                            <span asp-validation-for="PatientId" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AppointmentDate" class="form-label">Appointment Date</label>
+                                <input asp-for="AppointmentDate" class="form-control" type="date" />
+                                <span asp-validation-for="AppointmentDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AppointmentTime" class="form-label">Appointment Time</label>
+                                <input asp-for="AppointmentTime" class="form-control" type="time" />
+                                <span asp-validation-for="AppointmentTime" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DoctorName" class="form-label">Doctor Name</label>
+                            <input asp-for="DoctorName" class="form-control" placeholder="Dr. Smith" />
+                            <span asp-validation-for="DoctorName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Reason" class="form-label">Reason for Visit</label>
+                            <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Enter reason for appointment"></textarea>
+                            <span asp-validation-for="Reason" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="UseStoredProcedure" class="form-check-input" type="checkbox" />
+                                <label asp-for="UseStoredProcedure" class="form-check-label">
+                                    Use Stored Procedure (usp_CreateAppointment)
+                                </label>
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                When checked, the appointment will be created using the SQL stored procedure instead of EF Core.
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-page="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Back to List
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Schedule Appointment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,132 @@
+@page
+@model HCAMiniEHR.Pages.Appointments.DetailsModel
+@{
+    ViewData["Title"] = "Appointment Details";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5">
+            <i class="bi bi-calendar-event-fill me-2"></i>Appointment Details
+        </h1>
+        <a asp-page="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Appointment Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Appointment ID:</dt>
+                        <dd class="col-sm-7">@Model.Appointment.AppointmentId</dd>
+
+                        <dt class="col-sm-5">Patient:</dt>
+                        <dd class="col-sm-7">
+                            <strong>@Model.Appointment.Patient.FullName</strong>
+                            <br />
+                            <small class="text-muted">ID: @Model.Appointment.PatientId</small>
+                        </dd>
+
+                        <dt class="col-sm-5">Date:</dt>
+                        <dd class="col-sm-7">@Model.Appointment.AppointmentDate.ToString("MMMM dd, yyyy")</dd>
+
+                        <dt class="col-sm-5">Time:</dt>
+                        <dd class="col-sm-7">@Model.Appointment.AppointmentTime.ToString(@"hh\:mm")</dd>
+
+                        <dt class="col-sm-5">Doctor:</dt>
+                        <dd class="col-sm-7">@Model.Appointment.DoctorName</dd>
+
+                        <dt class="col-sm-5">Reason:</dt>
+                        <dd class="col-sm-7">@Model.Appointment.Reason</dd>
+
+                        <dt class="col-sm-5">Status:</dt>
+                        <dd class="col-sm-7">
+                            @if (Model.Appointment.Status == "Scheduled")
+                            {
+                                <span class="badge bg-success">@Model.Appointment.Status</span>
+                            }
+                            else if (Model.Appointment.Status == "Completed")
+                            {
+                                <span class="badge bg-secondary">@Model.Appointment.Status</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">@Model.Appointment.Status</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-5">Created:</dt>
+                        <dd class="col-sm-7">@Model.Appointment.CreatedDate.ToString("MM/dd/yyyy")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Lab Orders</h5>
+                    <a asp-page="/LabOrders/Create" asp-route-appointmentId="@Model.Appointment.AppointmentId" 
+                       class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle me-1"></i>Add Lab Order
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (!Model.Appointment.LabOrders.Any())
+                    {
+                        <p class="text-muted mb-0">No lab orders for this appointment.</p>
+                    }
+                    else
+                    {
+                        <div class="list-group">
+                            @foreach (var labOrder in Model.Appointment.LabOrders.OrderByDescending(l => l.OrderDate))
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">@labOrder.TestName</h6>
+                                        <small>
+                                            @if (labOrder.Status == "Pending")
+                                            {
+                                                <span class="badge bg-warning text-dark">@labOrder.Status</span>
+                                            }
+                                            else if (labOrder.Status == "Completed")
+                                            {
+                                                <span class="badge bg-success">@labOrder.Status</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-info">@labOrder.Status</span>
+                                            }
+                                        </small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <small>
+                                            <i class="bi bi-calendar me-1"></i>Ordered: @labOrder.OrderDate.ToString("MM/dd/yyyy")
+                                        </small>
+                                    </p>
+                                    @if (!string.IsNullOrEmpty(labOrder.Results))
+                                    {
+                                        <p class="mb-0">
+                                            <small><strong>Results:</strong> @labOrder.Results</small>
+                                        </p>
+                                    }
+                                    @if (labOrder.CompletedDate.HasValue)
+                                    {
+                                        <p class="mb-0">
+                                            <small class="text-muted">Completed: @labOrder.CompletedDate.Value.ToString("MM/dd/yyyy")</small>
+                                        </p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
