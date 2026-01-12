@@ -63,6 +63,17 @@ public class CreateModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // Explicit validation for required fields
+        if (PatientId <= 0)
+        {
+            ModelState.AddModelError(nameof(PatientId), "Please select a patient.");
+        }
+
+        if (DoctorId <= 0)
+        {
+            ModelState.AddModelError(nameof(DoctorId), "Please select a doctor.");
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadSelectLists();
