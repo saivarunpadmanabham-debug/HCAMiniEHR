@@ -155,6 +155,11 @@ public class AppointmentService
             appointment.CreatedDate = DateTime.Now;
             appointment.Status = "Scheduled";
             
+            // Clear navigation properties to avoid EF Core tracking issues
+            appointment.Patient = null!;
+            appointment.Doctor = null!;
+            appointment.LabOrders = new List<LabOrder>();
+            
             var result = await _repository.AddAsync(appointment);
 
             _logger.LogInformation("Appointment created: {AppointmentId} for Patient {PatientId} with Doctor {DoctorId}", 
