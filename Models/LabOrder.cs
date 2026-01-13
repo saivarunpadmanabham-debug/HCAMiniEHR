@@ -9,7 +9,6 @@ public class LabOrder
     [Key]
     public int LabOrderId { get; set; }
 
-    [Required(ErrorMessage = "Appointment is required")]
     [Display(Name = "Appointment")]
     public int AppointmentId { get; set; }
 
