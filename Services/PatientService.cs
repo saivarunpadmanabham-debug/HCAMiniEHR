@@ -161,6 +161,7 @@ public class PatientService
         {
             return await _context.Patients
                 .Include(p => p.Appointments)
+                    .ThenInclude(a => a.Doctor)
                 .FirstOrDefaultAsync(p => p.PatientId == id);
         }
         catch (Exception ex)
