@@ -13,10 +13,10 @@ public class PatientService
     private readonly EhrDbContext _context;
     private readonly ILogger<PatientService> _logger;
 
-    public PatientService(Repository<Patient> repository, EhrDbContext context, ILogger<PatientService> logger)
+    public PatientService(EhrDbContext context, ILogger<PatientService> logger)
     {
-        _repository = repository;
         _context = context;
+        _repository = new Repository<Patient>(context);
         _logger = logger;
     }
 

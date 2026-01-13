@@ -13,10 +13,10 @@ public class LabOrderService
     private readonly EhrDbContext _context;
     private readonly ILogger<LabOrderService> _logger;
 
-    public LabOrderService(Repository<LabOrder> repository, EhrDbContext context, ILogger<LabOrderService> logger)
+    public LabOrderService(EhrDbContext context, ILogger<LabOrderService> logger)
     {
-        _repository = repository;
         _context = context;
+        _repository = new Repository<LabOrder>(context);
         _logger = logger;
     }
 
