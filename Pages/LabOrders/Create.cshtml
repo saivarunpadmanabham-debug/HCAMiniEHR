@@ -19,8 +19,8 @@
 
                         <div class="mb-3">
                             <label asp-for="LabOrder.AppointmentId" class="form-label">Appointment</label>
-                            <select asp-for="LabOrder.AppointmentId" asp-items="Model.Appointments" class="form-select">
-                                <option value="">-- Select Appointment --</option>
+                            <select asp-for="LabOrder.AppointmentId" asp-items="Model.Appointments" class="form-select" required>
+                                <option value="0">-- Select Appointment --</option>
                             </select>
                             <span asp-validation-for="LabOrder.AppointmentId" class="text-danger"></span>
                         </div>
