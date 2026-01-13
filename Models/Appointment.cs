@@ -9,23 +9,29 @@ public class Appointment
     [Key]
     public int AppointmentId { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Patient is required")]
+    [Display(Name = "Patient")]
     public int PatientId { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Doctor is required")]
+    [Display(Name = "Doctor")]
+    public int DoctorId { get; set; }
+
+    [Required(ErrorMessage = "Appointment date is required")]
+    [Display(Name = "Appointment Date")]
+    [DataType(DataType.Date)]
     public DateTime AppointmentDate { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Appointment time is required")]
+    [Display(Name = "Appointment Time")]
+    [DataType(DataType.Time)]
     public TimeSpan AppointmentTime { get; set; }
 
-    [Required]
-    [MaxLength(100)]
-    public string DoctorName { get; set; } = string.Empty;
-
-    [MaxLength(500)]
+    [MaxLength(500, ErrorMessage = "Reason cannot exceed 500 characters")]
     public string? Reason { get; set; }
 
-    [MaxLength(20)]
+    [Required]
+    [MaxLength(20, ErrorMessage = "Status cannot exceed 20 characters")]
     public string Status { get; set; } = "Scheduled";
 
     public DateTime CreatedDate { get; set; } = DateTime.Now;
@@ -33,6 +39,9 @@ public class Appointment
     // Navigation properties
     [ForeignKey("PatientId")]
     public Patient Patient { get; set; } = null!;
+
+    [ForeignKey("DoctorId")]
+    public Doctor Doctor { get; set; } = null!;
 
     public ICollection<LabOrder> LabOrders { get; set; } = new List<LabOrder>();
 }

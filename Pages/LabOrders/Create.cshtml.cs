@@ -18,9 +18,30 @@ public class CreateModel : PageModel
     }
 
     [BindProperty]
-    public LabOrder LabOrder { get; set; } = new LabOrder();
+    public int AppointmentId { get; set; }
+
+    [BindProperty]
+    public string TestName { get; set; } = string.Empty;
 
     public SelectList Appointments { get; set; } = null!;
+    public SelectList TestTypes { get; set; } = null!;
+
+    // Common lab test types
+    private static readonly List<string> CommonTestTypes = new()
+    {
+        "Complete Blood Count (CBC)",
+        "Lipid Panel",
+        "HbA1c",
+        "Thyroid Function Test",
+        "Liver Function Test",
+        "Kidney Function Test",
+        "X-Ray",
+        "MRI",
+        "CT Scan",
+        "Ultrasound",
+        "ECG",
+        "Urinalysis"
+    };
 
     public async Task OnGetAsync(int? appointmentId)
     {
@@ -35,49 +56,66 @@ public class CreateModel : PageModel
             "DisplayText"
         );
 
+        TestTypes = new SelectList(CommonTestTypes);
+
         if (appointmentId.HasValue)
         {
-            LabOrder.AppointmentId = appointmentId.Value;
+            AppointmentId = appointmentId.Value;
         }
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // Explicit validation for appointment selection
+        if (AppointmentId <= 0)
+        {
+            ModelState.AddModelError(nameof(AppointmentId), "Please select an appointment.");
+        }
+
+        if (string.IsNullOrWhiteSpace(TestName))
+        {
+            ModelState.AddModelError(nameof(TestName), "Please select a test type.");
+        }
+
         if (!ModelState.IsValid)
         {
-            var appointments = await _appointmentService.GetAllAppointmentsAsync();
-            Appointments = new SelectList(
-                appointments.Select(a => new
-                {
-                    a.AppointmentId,
-                    DisplayText = $"Apt #{a.AppointmentId} - {a.Patient.FullName} - {a.AppointmentDate:MM/dd/yyyy}"
-                }),
-                "AppointmentId",
-                "DisplayText"
-            );
+            await LoadSelectLists();
             return Page();
         }
 
         try
         {
-            await _labOrderService.CreateLabOrderAsync(LabOrder);
-            TempData["SuccessMessage"] = $"Lab order for {LabOrder.TestName} created successfully!";
+            var labOrder = new LabOrder
+            {
+                AppointmentId = AppointmentId,
+                TestName = TestName
+            };
+
+            await _labOrderService.CreateLabOrderAsync(labOrder);
+            TempData["SuccessMessage"] = $"Lab order for {TestName} created successfully!";
             return RedirectToPage("./Index");
         }
         catch (Exception ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            var appointments = await _appointmentService.GetAllAppointmentsAsync();
-            Appointments = new SelectList(
-                appointments.Select(a => new
-                {
-                    a.AppointmentId,
-                    DisplayText = $"Apt #{a.AppointmentId} - {a.Patient.FullName} - {a.AppointmentDate:MM/dd/yyyy}"
-                }),
-                "AppointmentId",
-                "DisplayText"
-            );
+            await LoadSelectLists();
             return Page();
         }
+    }
+
+    private async Task LoadSelectLists()
+    {
+        var appointments = await _appointmentService.GetAllAppointmentsAsync();
+        Appointments = new SelectList(
+            appointments.Select(a => new
+            {
+                a.AppointmentId,
+                DisplayText = $"Apt #{a.AppointmentId} - {a.Patient.FullName} - {a.AppointmentDate:MM/dd/yyyy}"
+            }),
+            "AppointmentId",
+            "DisplayText"
+        );
+
+        TestTypes = new SelectList(CommonTestTypes);
     }
 }

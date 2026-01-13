@@ -10,6 +10,7 @@ public class EhrDbContext : DbContext
     }
 
     public DbSet<Patient> Patients { get; set; }
+    public DbSet<Doctor> Doctors { get; set; }
     public DbSet<Appointment> Appointments { get; set; }
     public DbSet<LabOrder> LabOrders { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
@@ -29,6 +30,20 @@ public class EhrDbContext : DbContext
                   .WithOne(a => a.Patient)
                   .HasForeignKey(a => a.PatientId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure Doctor entity
+        modelBuilder.Entity<Doctor>(entity =>
+        {
+            entity.HasKey(d => d.DoctorId);
+            entity.Property(d => d.CreatedDate).HasDefaultValueSql("GETDATE()");
+            entity.Property(d => d.IsActive).HasDefaultValue(true);
+            
+            // Configure one-to-many relationship with Appointments
+            entity.HasMany(d => d.Appointments)
+                  .WithOne(a => a.Doctor)
+                  .HasForeignKey(a => a.DoctorId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Configure Appointment entity

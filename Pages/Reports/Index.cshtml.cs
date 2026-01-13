@@ -1,5 +1,5 @@
 using HCAMiniEHR.Data;
-using HCAMiniEHR.Models;
+using HCAMiniEHR.DTOs;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,13 +15,13 @@ public class IndexModel : PageModel
     }
 
     // Report 1: Pending Lab Orders
-    public IEnumerable<PendingLabOrderReport> PendingLabOrders { get; set; } = new List<PendingLabOrderReport>();
+    public IEnumerable<PendingLabOrderReportDTO> PendingLabOrders { get; set; } = new List<PendingLabOrderReportDTO>();
 
     // Report 2: Patients Without Follow-Up
-    public IEnumerable<PatientWithoutFollowUpReport> PatientsWithoutFollowUp { get; set; } = new List<PatientWithoutFollowUpReport>();
+    public IEnumerable<PatientWithoutFollowUpReportDTO> PatientsWithoutFollowUp { get; set; } = new List<PatientWithoutFollowUpReportDTO>();
 
     // Report 3: Appointments by Month
-    public IEnumerable<AppointmentsByMonthReport> AppointmentsByMonth { get; set; } = new List<AppointmentsByMonthReport>();
+    public IEnumerable<AppointmentsByMonthReportDTO> AppointmentsByMonth { get; set; } = new List<AppointmentsByMonthReportDTO>();
 
     public async Task OnGetAsync()
     {
@@ -29,16 +29,18 @@ public class IndexModel : PageModel
         PendingLabOrders = await _context.LabOrders
             .Include(lo => lo.Appointment)
                 .ThenInclude(a => a.Patient)
-            .Where(lo => lo.Status == "Pending")
+            .Include(lo => lo.Appointment)
+                .ThenInclude(a => a.Doctor)
             .OrderBy(lo => lo.OrderDate)
-            .Select(lo => new PendingLabOrderReport
+            //.Where(lo => lo.Status)
+            .Select(lo => new PendingLabOrderReportDTO
             {
                 LabOrderId = lo.LabOrderId,
                 TestName = lo.TestName,
                 PatientName = lo.Appointment.Patient.FirstName + " " + lo.Appointment.Patient.LastName,
                 OrderDate = lo.OrderDate,
                 AppointmentDate = lo.Appointment.AppointmentDate,
-                DoctorName = lo.Appointment.DoctorName
+                DoctorName = lo.Appointment.Doctor.FullName
             })
             .ToListAsync();
 
@@ -47,7 +49,7 @@ public class IndexModel : PageModel
         PatientsWithoutFollowUp = await _context.Patients
             .Include(p => p.Appointments)
             .Where(p => !p.Appointments.Any(a => a.AppointmentDate > today))
-            .Select(p => new PatientWithoutFollowUpReport
+            .Select(p => new PatientWithoutFollowUpReportDTO
             {
                 PatientId = p.PatientId,
                 PatientName = p.FirstName + " " + p.LastName,
@@ -65,7 +67,7 @@ public class IndexModel : PageModel
         // Report 3: Appointments by Month using LINQ (GroupBy, Select, OrderByDescending)
         AppointmentsByMonth = await _context.Appointments
             .GroupBy(a => new { a.AppointmentDate.Year, a.AppointmentDate.Month })
-            .Select(g => new AppointmentsByMonthReport
+            .Select(g => new AppointmentsByMonthReportDTO
             {
                 Year = g.Key.Year,
                 Month = g.Key.Month,
@@ -78,37 +80,4 @@ public class IndexModel : PageModel
             .ThenByDescending(r => r.Month)
             .ToListAsync();
     }
-}
-
-// DTOs for Reports
-public class PendingLabOrderReport
-{
-    public int LabOrderId { get; set; }
-    public string TestName { get; set; } = string.Empty;
-    public string PatientName { get; set; } = string.Empty;
-    public DateTime OrderDate { get; set; }
-    public DateTime AppointmentDate { get; set; }
-    public string DoctorName { get; set; } = string.Empty;
-}
-
-public class PatientWithoutFollowUpReport
-{
-    public int PatientId { get; set; }
-    public string PatientName { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public DateTime? LastAppointmentDate { get; set; }
-    public int TotalAppointments { get; set; }
-}
-
-public class AppointmentsByMonthReport
-{
-    public int Year { get; set; }
-    public int Month { get; set; }
-    public int TotalAppointments { get; set; }
-    public int ScheduledCount { get; set; }
-    public int CompletedCount { get; set; }
-    public int CancelledCount { get; set; }
-
-    public string MonthName => new DateTime(Year, Month, 1).ToString("MMMM yyyy");
 }
