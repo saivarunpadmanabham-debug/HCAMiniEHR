@@ -27,12 +27,10 @@
 
                         <div class="mb-3">
                             <label asp-for="LabOrder.TestName" class="form-label">Test Name</label>
-                            <input asp-for="LabOrder.TestName" class="form-control" 
-                                   placeholder="e.g., Complete Blood Count (CBC)" />
+                            <select asp-for="LabOrder.TestName" asp-items="Model.TestTypes" class="form-select" required>
+                                <option value="">-- Select Test Type --</option>
+                            </select>
                             <span asp-validation-for="LabOrder.TestName" class="text-danger"></span>
-                            <div class="form-text">
-                                <small>Common tests: CBC, Lipid Panel, HbA1c, Thyroid Function, X-Ray, MRI</small>
-                            </div>
                         </div>
 
                         <div class="alert alert-info">

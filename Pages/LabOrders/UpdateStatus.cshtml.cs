@@ -62,6 +62,19 @@ public class UpdateStatusModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // Conditional validation for Results based on Status
+        if (Status == "Completed" || Status == "Cancelled")
+        {
+            if (string.IsNullOrWhiteSpace(Results))
+            {
+                ModelState.AddModelError(nameof(Results), "Results are required when status is Completed or Cancelled.");
+            }
+            else if (Results.Length < 10)
+            {
+                ModelState.AddModelError(nameof(Results), "Results must be at least 10 characters long.");
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             ModelState.AddModelError(string.Empty, "Please fill in all required fields.");
