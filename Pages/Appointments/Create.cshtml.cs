@@ -35,7 +35,7 @@ public class CreateModel : PageModel
     public string? Reason { get; set; }
 
     [BindProperty]
-    public bool UseStoredProcedure { get; set; } = false;
+    public bool UseStoredProcedure { get; set; } = true;
 
     public SelectList Patients { get; set; } = null!;
     public SelectList Doctors { get; set; } = null!;
