@@ -70,9 +70,9 @@ BEGIN
     
     IF @PendingLabOrderCount > 0
     BEGIN
-        -- Get lab order details for error message
+        -- Get lab order details for error message (FIXED: added table alias to Status)
         SELECT @LabOrderDetails = STRING_AGG(
-            TestName + ' (' + Status + ')', ', ')
+            lo.TestName + ' (' + lo.Status + ')', ', ')
         FROM [Healthcare].[LabOrder] lo
         INNER JOIN [Healthcare].[Appointment] a ON lo.AppointmentId = a.AppointmentId
         WHERE a.PatientId = @PatientId
