@@ -18,6 +18,15 @@
                         <input type="hidden" asp-for="Patient.PatientId" />
                         <input type="hidden" asp-for="Patient.CreatedDate" />
                         
+                        <!-- Hidden fields for original values -->
+                        <input type="hidden" asp-for="OriginalFirstName" />
+                        <input type="hidden" asp-for="OriginalLastName" />
+                        <input type="hidden" asp-for="OriginalDateOfBirth" />
+                        <input type="hidden" asp-for="OriginalGender" />
+                        <input type="hidden" asp-for="OriginalPhone" />
+                        <input type="hidden" asp-for="OriginalEmail" />
+                        <input type="hidden" asp-for="OriginalAddress" />
+                        
                         <div asp-validation-summary="All" class="alert alert-danger"></div>
 
                         <div class="row">

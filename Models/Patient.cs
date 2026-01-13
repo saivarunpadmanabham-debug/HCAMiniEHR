@@ -30,6 +30,7 @@ public class Patient
     [MaxLength(10, ErrorMessage = "Gender cannot exceed 10 characters")]
     public string? Gender { get; set; }
 
+    [Required(ErrorMessage = "Phone number is required")]
     [Phone(ErrorMessage = "Invalid phone number format")]
     [MaxLength(20, ErrorMessage = "Phone number cannot exceed 20 characters")]
     public string? Phone { get; set; }

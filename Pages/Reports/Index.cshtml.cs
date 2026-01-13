@@ -32,7 +32,7 @@ public class IndexModel : PageModel
             .Include(lo => lo.Appointment)
                 .ThenInclude(a => a.Doctor)
             .OrderBy(lo => lo.OrderDate)
-            //.Where(lo => lo.Status)
+            .Where(lo => lo.Status == "Pending")
             .Select(lo => new PendingLabOrderReportDTO
             {
                 LabOrderId = lo.LabOrderId,

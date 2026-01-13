@@ -83,6 +83,18 @@ public class PatientService
             if (patient.DateOfBirth > DateTime.Now)
                 throw new ArgumentException("Date of birth cannot be in the future.");
 
+            // Check for duplicate patient (same first name, last name, and date of birth)
+            var duplicateExists = await _context.Patients
+                .AnyAsync(p => p.FirstName.ToLower() == patient.FirstName.ToLower()
+                    && p.LastName.ToLower() == patient.LastName.ToLower()
+                    && p.DateOfBirth.Date == patient.DateOfBirth.Date);
+
+            if (duplicateExists)
+            {
+                throw new InvalidOperationException(
+                    $"A patient with the name {patient.FirstName} {patient.LastName} and date of birth {patient.DateOfBirth:MM/dd/yyyy} already exists in the system. Please verify the patient details.");
+            }
+
             patient.CreatedDate = DateTime.Now;
             var result = await _repository.AddAsync(patient);
 
@@ -99,6 +111,10 @@ public class PatientService
         catch (ArgumentException)
         {
             throw; // Re-throw validation exceptions
+        }
+        catch (InvalidOperationException)
+        {
+            throw; // Re-throw duplicate detection exceptions
         }
         catch (Exception ex)
         {
@@ -150,9 +166,40 @@ public class PatientService
             if (patient == null)
                 throw new InvalidOperationException($"Patient with ID {id} not found.");
 
+            // Check for upcoming appointments (scheduled or confirmed, not cancelled)
+            var upcomingAppointments = await _context.Appointments
+                .Where(a => a.PatientId == id 
+                    && a.AppointmentDate >= DateTime.Today
+                    && a.Status != "Cancelled"
+                    && a.Status != "Completed")
+                .ToListAsync();
+
+            if (upcomingAppointments.Any())
+            {
+                var appointmentDates = string.Join(", ", upcomingAppointments
+                    .Select(a => a.AppointmentDate.ToString("MM/dd/yyyy")));
+                throw new InvalidOperationException(
+                    $"Cannot delete patient {patient.FullName}. They have upcoming appointments on: {appointmentDates}. Please cancel or complete these appointments first.");
+            }
+
+            // Check for pending or in-progress lab orders
+            var pendingLabOrders = await _context.LabOrders
+                .Where(lo => lo.Appointment.PatientId == id 
+                    && (lo.Status == "Pending" || lo.Status == "In Progress"))
+                .Include(lo => lo.Appointment)
+                .ToListAsync();
+
+            if (pendingLabOrders.Any())
+            {
+                var labOrderDetails = string.Join(", ", pendingLabOrders
+                    .Select(lo => $"{lo.TestName} ({lo.Status})"));
+                throw new InvalidOperationException(
+                    $"Cannot delete patient {patient.FullName}. They have pending or in-progress lab orders: {labOrderDetails}. Please complete or cancel these lab orders first.");
+            }
+
             await _repository.DeleteAsync(id);
 
-            _logger.LogInformation("Patient deleted: {PatientId}", id);
+            _logger.LogInformation("Patient deleted: {PatientId} - {PatientName}", id, patient.FullName);
         }
         catch (DbUpdateException ex)
         {

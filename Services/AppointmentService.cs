@@ -38,6 +38,68 @@ public class AppointmentService
         }
     }
 
+    public async Task<bool> CheckPatientConflictAsync(int patientId, DateTime date, TimeSpan time, int? excludeAppointmentId = null)
+    {
+        try
+        {
+            // 15-minute buffer before and after the appointment
+            var bufferMinutes = 15;
+            var startBuffer = time.Subtract(TimeSpan.FromMinutes(bufferMinutes));
+            var endBuffer = time.Add(TimeSpan.FromMinutes(bufferMinutes));
+
+            var query = _context.Appointments
+                .Where(a => a.PatientId == patientId 
+                    && a.AppointmentDate.Date == date.Date 
+                    && a.Status != "Cancelled"
+                    && ((a.AppointmentTime >= startBuffer && a.AppointmentTime < time) // Within 15 min before
+                        || (a.AppointmentTime > time && a.AppointmentTime <= endBuffer) // Within 15 min after
+                        || a.AppointmentTime == time)); // Exact same time
+
+            if (excludeAppointmentId.HasValue)
+            {
+                query = query.Where(a => a.AppointmentId != excludeAppointmentId.Value);
+            }
+
+            return await query.AnyAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking patient conflict for PatientId {PatientId}", patientId);
+            throw new ApplicationException("An error occurred while checking for appointment conflicts.", ex);
+        }
+    }
+
+    public async Task<bool> CheckDoctorConflictAsync(int doctorId, DateTime date, TimeSpan time, int? excludeAppointmentId = null)
+    {
+        try
+        {
+            // 15-minute buffer before and after the appointment
+            var bufferMinutes = 15;
+            var startBuffer = time.Subtract(TimeSpan.FromMinutes(bufferMinutes));
+            var endBuffer = time.Add(TimeSpan.FromMinutes(bufferMinutes));
+
+            var query = _context.Appointments
+                .Where(a => a.DoctorId == doctorId 
+                    && a.AppointmentDate.Date == date.Date 
+                    && a.Status != "Cancelled"
+                    && ((a.AppointmentTime >= startBuffer && a.AppointmentTime < time) // Within 15 min before
+                        || (a.AppointmentTime > time && a.AppointmentTime <= endBuffer) // Within 15 min after
+                        || a.AppointmentTime == time)); // Exact same time
+
+            if (excludeAppointmentId.HasValue)
+            {
+                query = query.Where(a => a.AppointmentId != excludeAppointmentId.Value);
+            }
+
+            return await query.AnyAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking doctor conflict for DoctorId {DoctorId}", doctorId);
+            throw new ApplicationException("An error occurred while checking for appointment conflicts.", ex);
+        }
+    }
+
     public async Task<Appointment?> GetAppointmentByIdAsync(int id)
     {
         try
@@ -103,6 +165,32 @@ public class AppointmentService
     {
         try
         {
+            // Check for patient conflict
+            bool patientHasConflict = await CheckPatientConflictAsync(
+                patientId, 
+                appointmentDate, 
+                appointmentTime);
+
+            if (patientHasConflict)
+            {
+                var patient = await _context.Patients.FindAsync(patientId);
+                throw new InvalidOperationException(
+                    $"{patient?.FullName ?? "This patient"} already has an appointment within 15 minutes of {appointmentTime:hh\\:mm} on {appointmentDate:MM/dd/yyyy}. Please choose a time at least 15 minutes apart.");
+            }
+
+            // Check for doctor conflict
+            bool doctorHasConflict = await CheckDoctorConflictAsync(
+                doctorId, 
+                appointmentDate, 
+                appointmentTime);
+
+            if (doctorHasConflict)
+            {
+                var doctor = await _context.Doctors.FindAsync(doctorId);
+                throw new InvalidOperationException(
+                    $"Dr. {doctor?.FullName ?? "This doctor"} already has an appointment within 15 minutes of {appointmentTime:hh\\:mm} on {appointmentDate:MM/dd/yyyy}. Please choose a different time or doctor.");
+            }
+
             var patientIdParam = new SqlParameter("@PatientId", patientId);
             var doctorIdParam = new SqlParameter("@DoctorId", doctorId);
             var dateParam = new SqlParameter("@AppointmentDate", appointmentDate);
@@ -127,6 +215,10 @@ public class AppointmentService
             _logger.LogError(ex, "SQL error while creating appointment via stored procedure");
             throw new ApplicationException("A database error occurred while creating the appointment.", ex);
         }
+        catch (InvalidOperationException)
+        {
+            throw; // Re-throw conflict exceptions
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating appointment via stored procedure");
@@ -143,7 +235,7 @@ public class AppointmentService
                 throw new ArgumentNullException(nameof(appointment), "Appointment cannot be null");
 
             // Validation
-            if (appointment.AppointmentDate.Date < DateTime.Now.Date)
+            if (appointment.AppointmentDate < DateTime.Today)
                 throw new ArgumentException("Appointment date cannot be in the past.");
 
             if (appointment.DoctorId <= 0)
@@ -151,6 +243,32 @@ public class AppointmentService
 
             if (appointment.PatientId <= 0)
                 throw new ArgumentException("Patient is required.");
+
+            // Check for patient conflict
+            bool patientHasConflict = await CheckPatientConflictAsync(
+                appointment.PatientId, 
+                appointment.AppointmentDate, 
+                appointment.AppointmentTime);
+
+            if (patientHasConflict)
+            {
+                var patient = await _context.Patients.FindAsync(appointment.PatientId);
+                throw new InvalidOperationException(
+                    $"{patient?.FullName ?? "This patient"} already has an appointment within 15 minutes of {appointment.AppointmentTime:hh\\:mm} on {appointment.AppointmentDate:MM/dd/yyyy}. Please choose a time at least 15 minutes apart.");
+            }
+
+            // Check for doctor conflict
+            bool doctorHasConflict = await CheckDoctorConflictAsync(
+                appointment.DoctorId, 
+                appointment.AppointmentDate, 
+                appointment.AppointmentTime);
+
+            if (doctorHasConflict)
+            {
+                var doctor = await _context.Doctors.FindAsync(appointment.DoctorId);
+                throw new InvalidOperationException(
+                    $"Dr. {doctor?.FullName ?? "This doctor"} already has an appointment within 15 minutes of {appointment.AppointmentTime:hh\\:mm} on {appointment.AppointmentDate:MM/dd/yyyy}. Please choose a different time or doctor.");
+            }
 
             appointment.CreatedDate = DateTime.Now;
             appointment.Status = "Scheduled";
@@ -175,6 +293,10 @@ public class AppointmentService
         catch (ArgumentException)
         {
             throw; // Re-throw validation exceptions
+        }
+        catch (InvalidOperationException)
+        {
+            throw; // Re-throw conflict exceptions
         }
         catch (Exception ex)
         {
