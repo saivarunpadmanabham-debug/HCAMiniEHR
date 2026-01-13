@@ -51,6 +51,21 @@ public class PatientService
         }
     }
 
+    public async Task<Patient?> GetPatientByIdForEditAsync(int id)
+    {
+        try
+        {
+            return await _context.Patients
+                .AsNoTracking()  // Don't track this entity to avoid conflicts
+                .FirstOrDefaultAsync(p => p.PatientId == id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving patient {PatientId} for edit", id);
+            throw new ApplicationException($"An error occurred while retrieving patient {id}.", ex);
+        }
+    }
+
     public async Task<Patient> CreatePatientAsync(Patient patient)
     {
         try
