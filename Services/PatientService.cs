@@ -83,6 +83,18 @@ public class PatientService
             if (patient.DateOfBirth > DateTime.Now)
                 throw new ArgumentException("Date of birth cannot be in the future.");
 
+            // Check for duplicate patient (same first name, last name, and date of birth)
+            var duplicateExists = await _context.Patients
+                .AnyAsync(p => p.FirstName.ToLower() == patient.FirstName.ToLower()
+                    && p.LastName.ToLower() == patient.LastName.ToLower()
+                    && p.DateOfBirth.Date == patient.DateOfBirth.Date);
+
+            if (duplicateExists)
+            {
+                throw new InvalidOperationException(
+                    $"A patient with the name {patient.FirstName} {patient.LastName} and date of birth {patient.DateOfBirth:MM/dd/yyyy} already exists in the system. Please verify the patient details.");
+            }
+
             patient.CreatedDate = DateTime.Now;
             var result = await _repository.AddAsync(patient);
 
@@ -99,6 +111,10 @@ public class PatientService
         catch (ArgumentException)
         {
             throw; // Re-throw validation exceptions
+        }
+        catch (InvalidOperationException)
+        {
+            throw; // Re-throw duplicate detection exceptions
         }
         catch (Exception ex)
         {
