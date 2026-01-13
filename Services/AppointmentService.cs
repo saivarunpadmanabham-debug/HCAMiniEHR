@@ -42,11 +42,18 @@ public class AppointmentService
     {
         try
         {
+            // 15-minute buffer before and after the appointment
+            var bufferMinutes = 15;
+            var startBuffer = time.Subtract(TimeSpan.FromMinutes(bufferMinutes));
+            var endBuffer = time.Add(TimeSpan.FromMinutes(bufferMinutes));
+
             var query = _context.Appointments
                 .Where(a => a.PatientId == patientId 
                     && a.AppointmentDate.Date == date.Date 
-                    && a.AppointmentTime == time
-                    && a.Status != "Cancelled");
+                    && a.Status != "Cancelled"
+                    && ((a.AppointmentTime >= startBuffer && a.AppointmentTime < time) // Within 15 min before
+                        || (a.AppointmentTime > time && a.AppointmentTime <= endBuffer) // Within 15 min after
+                        || a.AppointmentTime == time)); // Exact same time
 
             if (excludeAppointmentId.HasValue)
             {
@@ -66,11 +73,18 @@ public class AppointmentService
     {
         try
         {
+            // 15-minute buffer before and after the appointment
+            var bufferMinutes = 15;
+            var startBuffer = time.Subtract(TimeSpan.FromMinutes(bufferMinutes));
+            var endBuffer = time.Add(TimeSpan.FromMinutes(bufferMinutes));
+
             var query = _context.Appointments
                 .Where(a => a.DoctorId == doctorId 
                     && a.AppointmentDate.Date == date.Date 
-                    && a.AppointmentTime == time
-                    && a.Status != "Cancelled");
+                    && a.Status != "Cancelled"
+                    && ((a.AppointmentTime >= startBuffer && a.AppointmentTime < time) // Within 15 min before
+                        || (a.AppointmentTime > time && a.AppointmentTime <= endBuffer) // Within 15 min after
+                        || a.AppointmentTime == time)); // Exact same time
 
             if (excludeAppointmentId.HasValue)
             {
@@ -161,7 +175,7 @@ public class AppointmentService
             {
                 var patient = await _context.Patients.FindAsync(patientId);
                 throw new InvalidOperationException(
-                    $"{patient?.FullName ?? "This patient"} already has an appointment scheduled at {appointmentTime:hh\\:mm} on {appointmentDate:MM/dd/yyyy}. Please choose a different time.");
+                    $"{patient?.FullName ?? "This patient"} already has an appointment within 15 minutes of {appointmentTime:hh\\:mm} on {appointmentDate:MM/dd/yyyy}. Please choose a time at least 15 minutes apart.");
             }
 
             // Check for doctor conflict
@@ -174,7 +188,7 @@ public class AppointmentService
             {
                 var doctor = await _context.Doctors.FindAsync(doctorId);
                 throw new InvalidOperationException(
-                    $"Dr. {doctor?.FullName ?? "This doctor"} already has an appointment scheduled at {appointmentTime:hh\\:mm} on {appointmentDate:MM/dd/yyyy}. Please choose a different time or doctor.");
+                    $"Dr. {doctor?.FullName ?? "This doctor"} already has an appointment within 15 minutes of {appointmentTime:hh\\:mm} on {appointmentDate:MM/dd/yyyy}. Please choose a different time or doctor.");
             }
 
             var patientIdParam = new SqlParameter("@PatientId", patientId);
@@ -240,7 +254,7 @@ public class AppointmentService
             {
                 var patient = await _context.Patients.FindAsync(appointment.PatientId);
                 throw new InvalidOperationException(
-                    $"{patient?.FullName ?? "This patient"} already has an appointment scheduled at {appointment.AppointmentTime:hh\\:mm} on {appointment.AppointmentDate:MM/dd/yyyy}. Please choose a different time.");
+                    $"{patient?.FullName ?? "This patient"} already has an appointment within 15 minutes of {appointment.AppointmentTime:hh\\:mm} on {appointment.AppointmentDate:MM/dd/yyyy}. Please choose a time at least 15 minutes apart.");
             }
 
             // Check for doctor conflict
@@ -253,7 +267,7 @@ public class AppointmentService
             {
                 var doctor = await _context.Doctors.FindAsync(appointment.DoctorId);
                 throw new InvalidOperationException(
-                    $"Dr. {doctor?.FullName ?? "This doctor"} already has an appointment scheduled at {appointment.AppointmentTime:hh\\:mm} on {appointment.AppointmentDate:MM/dd/yyyy}. Please choose a different time or doctor.");
+                    $"Dr. {doctor?.FullName ?? "This doctor"} already has an appointment within 15 minutes of {appointment.AppointmentTime:hh\\:mm} on {appointment.AppointmentDate:MM/dd/yyyy}. Please choose a different time or doctor.");
             }
 
             appointment.CreatedDate = DateTime.Now;
