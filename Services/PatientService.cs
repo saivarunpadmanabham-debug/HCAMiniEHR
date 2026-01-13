@@ -114,10 +114,8 @@ public class PatientService
             if (patient == null)
                 throw new ArgumentNullException(nameof(patient), "Patient cannot be null");
 
-            var existing = await _repository.GetByIdAsync(patient.PatientId);
-            if (existing == null)
-                throw new InvalidOperationException($"Patient with ID {patient.PatientId} not found.");
-
+            // Don't load the entity again - it causes tracking conflicts
+            // The patient object passed in already has the ID
             await _repository.UpdateAsync(patient);
 
             _logger.LogInformation("Patient updated successfully: {PatientId} - {PatientName}", 
@@ -133,9 +131,9 @@ public class PatientService
             _logger.LogError(ex, "Database error while updating patient {PatientId}", patient.PatientId);
             throw new ApplicationException("An error occurred while updating the patient in the database.", ex);
         }
-        catch (InvalidOperationException)
+        catch (ArgumentNullException)
         {
-            throw; // Re-throw not found exceptions
+            throw; // Re-throw validation exceptions
         }
         catch (Exception ex)
         {
