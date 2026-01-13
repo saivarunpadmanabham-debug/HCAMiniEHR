@@ -9,6 +9,7 @@ public class LabOrder
     [Key]
     public int LabOrderId { get; set; }
 
+    [Range(1, int.MaxValue, ErrorMessage = "Please select an appointment")]
     [Display(Name = "Appointment")]
     public int AppointmentId { get; set; }
 
