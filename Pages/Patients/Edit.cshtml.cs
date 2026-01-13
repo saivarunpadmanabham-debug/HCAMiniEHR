@@ -17,6 +17,28 @@ public class EditModel : PageModel
     [BindProperty]
     public Patient Patient { get; set; } = null!;
 
+    // Hidden fields to store original values
+    [BindProperty]
+    public string OriginalFirstName { get; set; } = string.Empty;
+    
+    [BindProperty]
+    public string OriginalLastName { get; set; } = string.Empty;
+    
+    [BindProperty]
+    public string OriginalDateOfBirth { get; set; } = string.Empty;
+    
+    [BindProperty]
+    public string? OriginalGender { get; set; }
+    
+    [BindProperty]
+    public string? OriginalPhone { get; set; }
+    
+    [BindProperty]
+    public string? OriginalEmail { get; set; }
+    
+    [BindProperty]
+    public string? OriginalAddress { get; set; }
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var patient = await _patientService.GetPatientByIdForEditAsync(id);
@@ -27,14 +49,14 @@ public class EditModel : PageModel
 
         Patient = patient;
         
-        // Store original values for change detection
-        TempData["OriginalFirstName"] = patient.FirstName;
-        TempData["OriginalLastName"] = patient.LastName;
-        TempData["OriginalDateOfBirth"] = patient.DateOfBirth.ToString("yyyy-MM-dd");
-        TempData["OriginalGender"] = patient.Gender;
-        TempData["OriginalPhone"] = patient.Phone;
-        TempData["OriginalEmail"] = patient.Email;
-        TempData["OriginalAddress"] = patient.Address;
+        // Store original values in properties (will be rendered as hidden fields)
+        OriginalFirstName = patient.FirstName;
+        OriginalLastName = patient.LastName;
+        OriginalDateOfBirth = patient.DateOfBirth.ToString("yyyy-MM-dd");
+        OriginalGender = patient.Gender;
+        OriginalPhone = patient.Phone;
+        OriginalEmail = patient.Email;
+        OriginalAddress = patient.Address;
         
         return Page();
     }
@@ -47,25 +69,17 @@ public class EditModel : PageModel
         }
 
         // Check if anything changed
-        var originalFirstName = TempData["OriginalFirstName"]?.ToString();
-        var originalLastName = TempData["OriginalLastName"]?.ToString();
-        var originalDateOfBirth = TempData["OriginalDateOfBirth"]?.ToString();
-        var originalGender = TempData["OriginalGender"]?.ToString();
-        var originalPhone = TempData["OriginalPhone"]?.ToString();
-        var originalEmail = TempData["OriginalEmail"]?.ToString();
-        var originalAddress = TempData["OriginalAddress"]?.ToString();
-
-        bool hasChanges = Patient.FirstName != originalFirstName ||
-                         Patient.LastName != originalLastName ||
-                         Patient.DateOfBirth.ToString("yyyy-MM-dd") != originalDateOfBirth ||
-                         Patient.Gender != originalGender ||
-                         Patient.Phone != originalPhone ||
-                         Patient.Email != originalEmail ||
-                         Patient.Address != originalAddress;
+        bool hasChanges = Patient.FirstName != OriginalFirstName ||
+                         Patient.LastName != OriginalLastName ||
+                         Patient.DateOfBirth.ToString("yyyy-MM-dd") != OriginalDateOfBirth ||
+                         Patient.Gender != OriginalGender ||
+                         Patient.Phone != OriginalPhone ||
+                         Patient.Email != OriginalEmail ||
+                         Patient.Address != OriginalAddress;
 
         if (!hasChanges)
         {
-            ModelState.AddModelError(string.Empty, "No changes were made. Please update at least one field.");
+            ModelState.AddModelError(string.Empty, "No changes were made. Please update at least one field before saving.");
             return Page();
         }
 
