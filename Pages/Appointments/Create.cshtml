@@ -48,7 +48,7 @@
 
                         <div class="mb-3">
                             <label asp-for="Reason" class="form-label">Reason for Visit</label>
-                            <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Enter reason for appointment"></textarea>
+                            <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Enter reason for appointment (minimum 5 characters)" required></textarea>
                             <span asp-validation-for="Reason" class="text-danger"></span>
                         </div>
 

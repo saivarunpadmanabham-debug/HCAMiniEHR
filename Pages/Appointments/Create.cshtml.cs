@@ -32,6 +32,8 @@ public class CreateModel : PageModel
     public TimeSpan AppointmentTime { get; set; } = new TimeSpan(9, 0, 0);
 
     [BindProperty]
+    [Required(ErrorMessage = "Reason for visit is required")]
+    [MinLength(5, ErrorMessage = "Reason must be at least 5 characters long")]
     public string? Reason { get; set; }
 
     [BindProperty]
