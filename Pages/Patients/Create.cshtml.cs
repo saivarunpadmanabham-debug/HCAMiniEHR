@@ -23,6 +23,17 @@ public class CreateModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // Additional validation for date of birth
+        if (Patient.DateOfBirth > DateTime.Today)
+        {
+            ModelState.AddModelError("Patient.DateOfBirth", "Date of birth cannot be in the future.");
+        }
+
+        if (Patient.DateOfBirth.Year < 1900)
+        {
+            ModelState.AddModelError("Patient.DateOfBirth", "Date of birth must be after 1900.");
+        }
+
         if (!ModelState.IsValid)
         {
             return Page();
