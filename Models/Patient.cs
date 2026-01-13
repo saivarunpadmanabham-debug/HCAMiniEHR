@@ -24,7 +24,6 @@ public class Patient
     [Required(ErrorMessage = "Date of birth is required")]
     [Display(Name = "Date of Birth")]
     [DataType(DataType.Date)]
-    [Range(typeof(DateTime), "1/1/1900", "12/31/2024", ErrorMessage = "Date of birth must be between 1900 and 2024")]
     public DateTime DateOfBirth { get; set; }
 
     [Required(ErrorMessage = "Gender is required")]
