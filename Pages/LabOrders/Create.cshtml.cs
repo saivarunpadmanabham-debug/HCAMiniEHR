@@ -18,7 +18,10 @@ public class CreateModel : PageModel
     }
 
     [BindProperty]
-    public LabOrder LabOrder { get; set; } = new LabOrder();
+    public int AppointmentId { get; set; }
+
+    [BindProperty]
+    public string TestName { get; set; } = string.Empty;
 
     public SelectList Appointments { get; set; } = null!;
     public SelectList TestTypes { get; set; } = null!;
@@ -57,16 +60,21 @@ public class CreateModel : PageModel
 
         if (appointmentId.HasValue)
         {
-            LabOrder.AppointmentId = appointmentId.Value;
+            AppointmentId = appointmentId.Value;
         }
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
         // Explicit validation for appointment selection
-        if (LabOrder.AppointmentId <= 0)
+        if (AppointmentId <= 0)
         {
-            ModelState.AddModelError("LabOrder.AppointmentId", "Please select an appointment.");
+            ModelState.AddModelError(nameof(AppointmentId), "Please select an appointment.");
+        }
+
+        if (string.IsNullOrWhiteSpace(TestName))
+        {
+            ModelState.AddModelError(nameof(TestName), "Please select a test type.");
         }
 
         if (!ModelState.IsValid)
@@ -77,8 +85,14 @@ public class CreateModel : PageModel
 
         try
         {
-            await _labOrderService.CreateLabOrderAsync(LabOrder);
-            TempData["SuccessMessage"] = $"Lab order for {LabOrder.TestName} created successfully!";
+            var labOrder = new LabOrder
+            {
+                AppointmentId = AppointmentId,
+                TestName = TestName
+            };
+
+            await _labOrderService.CreateLabOrderAsync(labOrder);
+            TempData["SuccessMessage"] = $"Lab order for {TestName} created successfully!";
             return RedirectToPage("./Index");
         }
         catch (Exception ex)
